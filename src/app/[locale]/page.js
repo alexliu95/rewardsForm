@@ -26,6 +26,7 @@ export default function Home() {
 	const [errors, setErrors] = useState([]);
 	const [billErrors, setBillErrors] = useState([]);
 	const [emergencyErrors, setEmergencyErrors] = useState({terms: false});
+	const [honeypot, setHoneypot] = useState('');
 
 	// 当页面加载时，检查 localStorage 中是否有数据
 	useEffect(() => {
@@ -263,6 +264,10 @@ export default function Home() {
 		})
 	}
 	const handleSubmit = async () => {
+		if (honeypot) {
+			router.push('./en/error');
+			return; // 终止提交逻辑
+		}
 		const isValidEmergency = validateOptionForm();
 		if (isValidEmergency) {
 			setCurStep(4);
@@ -496,8 +501,6 @@ export default function Home() {
 							</div>
 						</div>
 						<div className="my-3 text-sm text-slate-500 inline-flex">
-							{/* <input className={`appearance-none mr-2 mt-1 h-4 w-4 rounded border-2 border-gray-400 checked:bg-blue-500 checked:border-gray-400 ${emergencyErrors.terms ? 'border-red-500' : ''}`} type="checkbox" name="emergency.terms" onChange={(e) => handleCheckboxChange(e)} />
-							<label htmlFor="terms">{t('Iwouldtakefully')}</label> */}
 							<div className="flex items-center h-5">
 								{console.log('emergency: ', emergency)}
 								{console.log('checkbox: ', emergency.terms)}
@@ -511,6 +514,9 @@ export default function Home() {
 								</div>
 							</div>
 							<label htmlFor="emergency-terms" className="ml-2 text-sm text-gray-600">{t('Iwouldtakefully')}</label>
+						</div>
+						<div>
+							<input type="text" name="honeypot" className="hidden" onChange={(e) => setHoneypot(e.target.value)} value={honeypot || ''}/>
 						</div>
 					</div>
 					
