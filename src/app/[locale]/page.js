@@ -18,7 +18,7 @@ export default function Home() {
 	const productCity = searchParams.get('attribute_departure-city');
 
 	const [passengerNumber, setPassengerNumber] = useState(1);
-	const [passengers, setPassengers] = useState(Array(6).fill({firstname: '', lastname: '', middlename: '', passportnumber: '', passportexpiry: '', dob: '', gender: '', nationality: '', phonenumber: '', email: ''}));
+	const [passengers, setPassengers] = useState({},{},{},{},{},{});
 	const [billing, setBilling] = useState({});
 	const [emergency, setEmergency] = useState({roomtype: '', firstname: '', phonenumber: '', email: '', terms: false});
 	const [curStep, setCurStep] = useState(0);
@@ -148,6 +148,7 @@ export default function Home() {
 	};
 	const addPassenger = () => {
 		setPassengerNumber(preState => {
+			preState = parseInt(preState);
 			if ( preState < 6 ) {
 				return preState += 1;
 			} else {
@@ -366,43 +367,43 @@ export default function Home() {
 							<div className="grid grid-cols-2 gap-4 text-gray-600">
 								<div className="w-full">
 									<div>First Name</div>
-									<input type="text" name={`passengers[${index}].firstname`} value={passengers[index].firstname || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.firstname ? 'border-red-500' : ''}`} placeholder="First Name" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passengers[${index}].firstname`} value={passengers[index]?.firstname || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.firstname ? 'border-red-500' : ''}`} placeholder="First Name" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Last Name</div>
-									<input type="text" name={`passenger[${index}].lastname`} value={passengers[index].lastname || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.lastname ? 'border-red-500' : ''}`} placeholder="Last Name" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].lastname`} value={passengers[index]?.lastname || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.lastname ? 'border-red-500' : ''}`} placeholder="Last Name" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Middle Name (optional)</div>
-									<input type="text" name={`passenger[${index}].middlename`} value={passengers[index].middlename || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.middlename ? 'border-red-500' : ''}`} placeholder="Middle Name" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].middlename`} value={passengers[index]?.middlename || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.middlename ? 'border-red-500' : ''}`} placeholder="Middle Name" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Passport Number</div>
-									<input type="text" name={`passenger[${index}].passportnumber`} value={passengers[index].passportnumber || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.passportnumber ? 'border-red-500' : ''}`} placeholder="Passport Number" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].passportnumber`} value={passengers[index]?.passportnumber || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.passportnumber ? 'border-red-500' : ''}`} placeholder="Passport Number" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Passport Expiry Date</div>
-									<input type="Date" name={`passenger[${index}].passportexpiry`} value={passengers[index].passportexpiry || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.passportexpiry ? 'border-red-500' : ''}`} placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="Date" name={`passenger[${index}].passportexpiry`} value={passengers[index]?.passportexpiry || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.passportexpiry ? 'border-red-500' : ''}`} placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Gender</div>
-									<input type="text" name={`passenger[${index}].gender`} value={passengers[index].gender || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.gender ? 'border-red-500' : ''}`} placeholder="Gender" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].gender`} value={passengers[index]?.gender || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.gender ? 'border-red-500' : ''}`} placeholder="Gender" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Date of Birth</div>
-									<input type="Date" name={`passenger[${index}].dob`} value={passengers[index].dob || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.dob ? 'border-red-500' : ''}`} placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="Date" name={`passenger[${index}].dob`} value={passengers[index]?.dob || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.dob ? 'border-red-500' : ''}`} placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Nationality</div>
-									<input type="text" name={`passenger[${index}].nationality`} value={passengers[index].nationality || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.nationality ? 'border-red-500' : ''}`} placeholder="Country" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].nationality`} value={passengers[index]?.nationality || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.nationality ? 'border-red-500' : ''}`} placeholder="Country" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Phone Number</div>
-									<input type="text" name={`passenger[${index}].phonenumber`} value={passengers[index].phonenumber || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.phonenumber ? 'border-red-500' : ''}`} placeholder="eg. 800-123-4567" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].phonenumber`} value={passengers[index]?.phonenumber || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.phonenumber ? 'border-red-500' : ''}`} placeholder="eg. 800-123-4567" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Email</div>
-									<input type="text" name={`passenger[${index}].email`} value={passengers[index].email || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.email ? 'border-red-500' : ''}`} placeholder="Email" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].email`} value={passengers[index]?.email || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.email ? 'border-red-500' : ''}`} placeholder="Email" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 							</div>
 						</div>
