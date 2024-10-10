@@ -14,8 +14,8 @@ export default function Home() {
 	const productId = searchParams.get('productId');
 	const productName = searchParams.get('productName');
 	const productQuantity = searchParams.get('quantity');
-	const productDate = searchParams.get('departDate');
-	const productCity = searchParams.get('departCity');
+	const productDate = searchParams.get('attribute_departure-date');
+	const productCity = searchParams.get('attribute_departure-city');
 
 	const [passengerNumber, setPassengerNumber] = useState(1);
 	const [passengers, setPassengers] = useState([{},{},{},{},{},{}]);
