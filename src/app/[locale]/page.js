@@ -18,7 +18,7 @@ export default function Home() {
 	const productCity = searchParams.get('attribute_departure-city');
 
 	const [passengerNumber, setPassengerNumber] = useState(1);
-	const [passengers, setPassengers] = useState([{},{},{},{},{},{}]);
+	const [passengers, setPassengers] = useState(Array(6).fill({firstname: '', lastname: '', middlename: '', passportnumber: '', passportexpiry: '', dob: '', gender: '', nationality: '', phonenumber: '', email: ''}));
 	const [billing, setBilling] = useState({});
 	const [emergency, setEmergency] = useState({roomtype: '', firstname: '', phonenumber: '', email: '', terms: false});
 	const [curStep, setCurStep] = useState(0);
