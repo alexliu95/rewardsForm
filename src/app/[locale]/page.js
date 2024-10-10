@@ -20,9 +20,12 @@ export default function Home() {
 	const [passengerNumber, setPassengerNumber] = useState(1);
 	const [passengers, setPassengers] = useState([{},{},{},{},{},{}]);
 	const [billing, setBilling] = useState({});
-	const [emergency, setEmergency] = useState({});
+	const [emergency, setEmergency] = useState({roomtype: '', firstname: '', phonenumber: '', email: '', terms: false});
 	const [curStep, setCurStep] = useState(0);
 	const [confirmNo, setConfirmNo] = useState(null);
+	const [errors, setErrors] = useState([]);
+	const [billErrors, setBillErrors] = useState([]);
+	const [emergencyErrors, setEmergencyErrors] = useState({terms: false});
 
 	// 当页面加载时，检查 localStorage 中是否有数据
 	useEffect(() => {
@@ -49,7 +52,89 @@ export default function Home() {
 		if (productQuantity) {
 			setPassengerNumber(productQuantity);
 		}
-	}, [productId])
+	}, [productId]);
+
+	const validateForm = () => {
+		const requiredFields = ['firstname', 'lastname', 'passportnumber', 'passportexpiry', 'dob', 'nationality', 'phonenumber', 'email'];
+		const newErrors = [];
+	
+		for (let i = 0; i < passengerNumber; i++) {
+			const passengerErrors = {};
+			
+			requiredFields.forEach(field => {
+				if (!passengers[i]?.[field]) {
+					passengerErrors[field] = true;
+				}
+			});
+
+			// 验证 email 格式（可选）
+			if (passengers[i].email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(passengers[i].email)) {
+				passengerErrors.email = 'invalid';
+			}
+	
+			newErrors[i] = passengerErrors;
+		}
+	
+		setErrors(newErrors);
+	
+		// 检查是否所有必填字段都已填写
+		return newErrors.every(passengerError => 
+			Object.keys(passengerError).length === 0
+		);
+	};
+
+	const validateBillingForm = () => {
+		const requiredFields = ['firstname', 'lastname', 'address', 'city', 'state', 'zipcode', 'country', 'phonenumber', 'email'];
+	
+		const newErrors = {};
+		let isValid = true;
+	
+		requiredFields.forEach(field => {
+			if (!billing[field]) {
+				newErrors[field] = true;
+				isValid = false;
+			}
+		});
+
+		// 验证 email 格式（可选）
+		if (billing.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billing.email)) {
+			newErrors.email = 'invalid';
+			isValid = false;
+		}
+	
+		setBillErrors(newErrors);
+		return isValid;
+	};
+
+	const validateOptionForm = () => {
+		const requiredFields = ['roomtype', 'firstname', 'phonenumber', 'email'];
+	
+		const newErrors = {};
+		let isValid = true;
+	
+		// 验证普通字段
+		requiredFields.forEach(field => {
+			if (!emergency[field]) {
+				newErrors[field] = true;
+				isValid = false;
+			}
+		});
+		
+		// 验证 email 格式（可选）
+		if (emergency.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emergency.email)) {
+			newErrors.email = 'invalid';
+			isValid = false;
+		}
+		
+		// 验证 terms checkbox
+		if (!emergency.terms) {
+			newErrors.terms = true;
+			isValid = false;
+		}
+		
+		setEmergencyErrors(newErrors);
+		return isValid;
+	};
 
 	const removePassenger = () => {
 		setPassengerNumber(preState => {
@@ -72,26 +157,64 @@ export default function Home() {
 	const handlePassengerChange = (index, e) => {
 		const { name, value } = e.target;
 		const fieldName = name.split('.')[1];
-		// 复制现有的乘客数据
+		
+		// 更新乘客数据
 		const newPassengers = [...passengers];
-		// 更新当前乘客的数据
-		newPassengers[index][fieldName] = value;
-		// 更新状态
+		if (!newPassengers[index]) {
+			newPassengers[index] = {};
+		}
+		newPassengers[index] = {
+			...newPassengers[index],
+			[fieldName]: value
+		};
 		setPassengers(newPassengers);
+		
+		// 如果该字段有错误，在用户输入时清除错误
+		if (errors[index]?.[fieldName]) {
+			const newErrors = [...errors];
+			if (!newErrors[index]) {
+				newErrors[index] = {};
+			}
+			newErrors[index] = {
+				...newErrors[index],
+				[fieldName]: false
+			};
+			setErrors(newErrors);
+		}
 	};
 	const handleBillingChange = (e) => {
 		const { name, value } = e.target;
 		const fieldName = name.split('.')[1];
-		const newBilling = {...billing};
-		newBilling[fieldName] = value;
-		setBilling(newBilling);
+		setBilling(prev => ({
+			...prev,
+			[fieldName]: value
+		}));
+	
+		// 清除错误
+		if (errors[fieldName]) {
+			setErrors(prev => ({
+				...prev,
+				[fieldName]: false
+			}));
+		}
 	};
 	const handleEmergencyChange = (e) => {
 		const { name, value } = e.target;
 		const fieldName = name.split('.')[1];
-		const newEmergency = {...emergency};
-		newEmergency[fieldName] = value;
-		setEmergency(newEmergency);
+
+		setEmergency(prev => ({
+			...prev,
+			[fieldName]: value
+		}));
+		console.log('fieldname: ', fieldName);
+		console.log('value: ', value);
+
+		if (emergencyErrors[fieldName]) {
+			setEmergencyErrors(prev => ({
+				...prev,
+				[fieldName]: false
+			}));
+		}
 	}
 	const handleSave = () => {
 		localStorage.setItem('passengerData', JSON.stringify(passengers));
@@ -100,15 +223,36 @@ export default function Home() {
 		localStorage.setItem('emergency', JSON.stringify(emergency));
     	alert("Data saved to localStorage!");
 	};
+
+	const handleCheckboxChange = (e) => {
+		e.stopPropagation();
+		setEmergency(prev => ({
+			...prev,
+			terms: !prev.terms
+		}));
+		
+		if (emergencyErrors["terms"]) {
+			setEmergencyErrors(prev => ({
+				...prev,
+				terms: false
+			}));
+		}
+	};
+
 	const handleNext = () => {
-		setCurStep(preState => {
-			if (preState < 3) {
-				return preState += 1;
-			} else {
-				return preState;
-			}
-		})
-	}
+		const isValid = validateForm();
+		const isValidBilling = validateBillingForm();
+		const isValidEmergency = validateOptionForm();
+		if ((isValid && curStep == 0) || (isValidBilling && curStep == 1) || (isValidEmergency && curStep == 2)) {
+			setCurStep(preState => {
+				if (preState < 3) {
+					return preState += 1;
+				} else {
+					return preState;
+				}
+			})
+		}
+	};
 	const handlePrev = () => {
 		setCurStep(preState => {
 			if (preState > 0) {
@@ -119,27 +263,30 @@ export default function Home() {
 		})
 	}
 	const handleSubmit = async () => {
-		setCurStep(4);
-		try {
-			const response = await fetch('/api/retrieveConfirmation', {
-				method: 'POST',
-				headers: {
-				  'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ tourInfo: {productId, productName, productDate, productCity}, passengerNumber: passengerNumber, passengers: passengers, emergency: emergency, billing: billing })
-			});
-			const data = await response.json();
-			console.log('data: ', data);
-			if (data.success) {
-				setConfirmNo(data.confirmNo);
-			} else {
+		const isValidEmergency = validateOptionForm();
+		if (isValidEmergency) {
+			setCurStep(4);
+			try {
+				const response = await fetch('/api/retrieveConfirmation', {
+					method: 'POST',
+					headers: {
+					'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ tourInfo: {productId, productName, productDate, productCity}, passengerNumber: passengerNumber, passengers: passengers, emergency: emergency, billing: billing })
+				});
+				const data = await response.json();
+				console.log('data: ', data);
+				if (data.success) {
+					setConfirmNo(data.confirmNo);
+				} else {
+					router.push('./en/error');
+				}
+				
+			} catch (error) {
 				router.push('./en/error');
 			}
-			
-		} catch (error) {
-			router.push('./en/error');
+			setCurStep(3);
 		}
-		setCurStep(3);
 	}
 
 	return (
@@ -214,43 +361,43 @@ export default function Home() {
 							<div className="grid grid-cols-2 gap-4 text-gray-600">
 								<div className="w-full">
 									<div>First Name</div>
-									<input type="text" name={`passengers[${index}].firstname`} value={passengers[index].firstname || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="First Name" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passengers[${index}].firstname`} value={passengers[index].firstname || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.firstname ? 'border-red-500' : ''}`} placeholder="First Name" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Last Name</div>
-									<input type="text" name={`passenger[${index}].lastname`} value={passengers[index].lastname || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Last Name" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].lastname`} value={passengers[index].lastname || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.lastname ? 'border-red-500' : ''}`} placeholder="Last Name" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Middle Name (optional)</div>
-									<input type="text" name={`passenger[${index}].middlename`} value={passengers[index].middlename || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Middle Name" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].middlename`} value={passengers[index].middlename || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.middlename ? 'border-red-500' : ''}`} placeholder="Middle Name" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Passport Number</div>
-									<input type="text" name={`passenger[${index}].passportnumber`} value={passengers[index].passportnumber || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Passport Number" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].passportnumber`} value={passengers[index].passportnumber || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.passportnumber ? 'border-red-500' : ''}`} placeholder="Passport Number" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Passport Expiry Date</div>
-									<input type="Date" name={`passenger[${index}].passportexpiry`} value={passengers[index].passportexpiry || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="Date" name={`passenger[${index}].passportexpiry`} value={passengers[index].passportexpiry || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.passportexpiry ? 'border-red-500' : ''}`} placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Gender</div>
-									<input type="text" name={`passenger[${index}].gender`} value={passengers[index].gender || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Gender" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].gender`} value={passengers[index].gender || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.gender ? 'border-red-500' : ''}`} placeholder="Gender" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Date of Birth</div>
-									<input type="Date" name={`passenger[${index}].dob`} value={passengers[index].dob || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="Date" name={`passenger[${index}].dob`} value={passengers[index].dob || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.dob ? 'border-red-500' : ''}`} placeholder="1999-12-12" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Nationality</div>
-									<input type="text" name={`passenger[${index}].nationality`} value={passengers[index].nationality || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Country" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].nationality`} value={passengers[index].nationality || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.nationality ? 'border-red-500' : ''}`} placeholder="Country" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Phone Number</div>
-									<input type="text" name={`passenger[${index}].phonenumber`} value={passengers[index].phonenumber || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="eg. 800-123-4567" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].phonenumber`} value={passengers[index].phonenumber || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.phonenumber ? 'border-red-500' : ''}`} placeholder="eg. 800-123-4567" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 								<div className="w-full">
 									<div>Email</div>
-									<input type="text" name={`passenger[${index}].email`} value={passengers[index].email || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Email" onChange={(e) => handlePassengerChange(index, e)} />
+									<input type="text" name={`passenger[${index}].email`} value={passengers[index].email || ''} className={`border-2 px-3 py-2 w-full rounded ${errors[index]?.email ? 'border-red-500' : ''}`} placeholder="Email" onChange={(e) => handlePassengerChange(index, e)} />
 								</div>
 							</div>
 						</div>
@@ -262,11 +409,11 @@ export default function Home() {
 						<div className="grid grid-cols-2 gap-4 text-gray-600">
 							<div className="w-full">
 								<div>First Name</div>
-								<input type="text" name={`billing.firstname`} value={billing.firstname || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="First Name" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.firstname`} value={billing.firstname || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.firstname ? 'border-red-500' : ''}`} placeholder="First Name" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full">
 								<div>Last Name</div>
-								<input type="text" name={`billing.lastname`} value={billing.lastname || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Last Name" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.lastname`} value={billing.lastname || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.lastname ? 'border-red-500' : ''}`} placeholder="Last Name" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full col-span-2">
 								<div>Company Name (optional)</div>
@@ -274,32 +421,32 @@ export default function Home() {
 							</div>
 							<div className="w-full col-span-2">
 								<div>Street Address</div>
-								<input type="text" name={`billing.address`} value={billing.address || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="House number and street name" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.address`} value={billing.address || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.address ? 'border-red-500' : ''}`} placeholder="House number and street name" onChange={(e) => handleBillingChange(e)} />
 								<input type="text" name={`billing.apartment`} value={billing.apartment || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Apartment, suite, unit, etc. (optional)" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full">
 								<div>Town / City</div>
-								<input type="text" name={`billing.city`} value={billing.city || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="City" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.city`} value={billing.city || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.city ? 'border-red-500' : ''}`} placeholder="City" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full">
 								<div>State</div>
-								<input type="text" name={`billing.state`} value={billing.state || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.state`} value={billing.state || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.state ? 'border-red-500' : ''}`} placeholder="" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full">
 								<div>Zip Code</div>
-								<input type="text" name={`billing.zipcode`} value={billing.zipcode || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="zipcode" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.zipcode`} value={billing.zipcode || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.zipcode ? 'border-red-500' : ''}`} placeholder="zipcode" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full">
 								<div>Country</div>
-								<input type="text" name={`billing.country`} value={billing.country || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="country" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.country`} value={billing.country || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.country ? 'border-red-500' : ''}`} placeholder="country" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full">
 								<div>Phone Number</div>
-								<input type="text" name={`billing.phonenumber`} value={billing.phonenumber || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="eg. 800-123-4567" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.phonenumber`} value={billing.phonenumber || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.phonenumber ? 'border-red-500' : ''}`} placeholder="eg. 800-123-4567" onChange={(e) => handleBillingChange(e)} />
 							</div>
 							<div className="w-full">
 								<div>Email Address</div>
-								<input type="text" name={`billing.email`} value={billing.email || ''} className="border-2 px-3 py-2 w-full rounded" placeholder="Email" onChange={(e) => handleBillingChange(e)} />
+								<input type="text" name={`billing.email`} value={billing.email || ''} className={`border-2 px-3 py-2 w-full rounded ${billErrors.email ? 'border-red-500' : ''}`} placeholder="Email" onChange={(e) => handleBillingChange(e)} />
 							</div>
 						</div>
 					</div>
@@ -337,20 +484,33 @@ export default function Home() {
 						<div className="grid grid-cols-2 gap-4 text-gray-600">
 							<div className="w-full">
 								<div>Contact Name</div>
-								<input type="text" name={`emergency.firstname`} value={emergency.firstname} className="border-2 px-3 py-2 w-full rounded" placeholder="Name" onChange={(e) => handleEmergencyChange(e)}/>
+								<input type="text" name={`emergency.firstname`} value={emergency.firstname} className={`border-2 px-3 py-2 w-full rounded ${emergencyErrors.firstname ? 'border-red-500' : ''}`} placeholder="Name" onChange={(e) => handleEmergencyChange(e)}/>
 							</div>
 							<div className="w-full">
 								<div>Phone Number</div>
-								<input type="text" name={`emergency.phonenumber`} value={emergency.phonenumber} className="border-2 px-3 py-2 w-full rounded" placeholder="eg. 800-123-4567" onChange={(e) => handleEmergencyChange(e)}/>
+								<input type="text" name={`emergency.phonenumber`} value={emergency.phonenumber} className={`border-2 px-3 py-2 w-full rounded ${emergencyErrors.phonenumber ? 'border-red-500' : ''}`} placeholder="eg. 800-123-4567" onChange={(e) => handleEmergencyChange(e)}/>
 							</div>
 							<div className="w-full">
 								<div>Email</div>
-								<input type="text" name={`emergency.email`} value={emergency.email} className="border-2 px-3 py-2 w-full rounded" placeholder="Email" onChange={(e) => handleEmergencyChange(e)}/>
+								<input type="text" name={`emergency.email`} value={emergency.email} className={`border-2 px-3 py-2 w-full rounded ${emergencyErrors.email ? 'border-red-500' : ''}`} placeholder="Email" onChange={(e) => handleEmergencyChange(e)}/>
 							</div>
 						</div>
-						<div className="my-3 text-sm text-slate-500">
-							<input className="mr-2" type="checkbox" name="terms" value="terms"/>
-							<label htmlFor="terms">{t('Iwouldtakefully')}</label>
+						<div className="my-3 text-sm text-slate-500 inline-flex">
+							{/* <input className={`appearance-none mr-2 mt-1 h-4 w-4 rounded border-2 border-gray-400 checked:bg-blue-500 checked:border-gray-400 ${emergencyErrors.terms ? 'border-red-500' : ''}`} type="checkbox" name="emergency.terms" onChange={(e) => handleCheckboxChange(e)} />
+							<label htmlFor="terms">{t('Iwouldtakefully')}</label> */}
+							<div className="flex items-center h-5">
+								{console.log('emergency: ', emergency)}
+								{console.log('checkbox: ', emergency.terms)}
+								<input type="checkbox" name="emergency.terms" checked={emergency.terms} onChange={handleCheckboxChange} className="hidden" />
+								<div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${emergency.terms ? 'bg-blue-500 border-blue-500' : 'border-gray-400'} ${emergencyErrors.terms ? 'border-red-500' : ''}`} onClick={handleCheckboxChange}>
+									{emergency.terms && (
+										<svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+											<path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+										</svg>
+									)}
+								</div>
+							</div>
+							<label htmlFor="emergency-terms" className="ml-2 text-sm text-gray-600">{t('Iwouldtakefully')}</label>
 						</div>
 					</div>
 					
